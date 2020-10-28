@@ -1,5 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
+const { ModuleFederationPlugin } = require("webpack").container;
 
 const mode = process.env.NODE_ENV || 'production';
 
@@ -20,9 +20,10 @@ module.exports = {
     rules: [
       {
         test: /\.jsx?$/,
-        loader: require.resolve('babel-loader'),
+        loader: "babel-loader",
+        exclude: /node_modules/,
         options: {
-          presets: [require.resolve('@babel/preset-react')],
+          presets: ["@babel/preset-react"],
         },
       },
     ],
@@ -35,12 +36,22 @@ module.exports = {
       library: { type: 'var', name: 'application_a' },
       filename: 'remoteEntry.js',
       exposes: {
-        'SayHelloFromA': './src/app',
+        './SayHelloFromA': './src/app',
       },
       remotes: {
         'application_b': 'application_b',
       },
-      shared: ['react', 'react-dom'],
+      shared: {
+        react: {
+          import: "react", // the "react" package will be used a provided and fallback module
+          shareKey: "react", // under this name the shared module will be placed in the share scope
+          shareScope: "default", // share scope with this name will be used
+          singleton: true, // only a single version of the shared module is allowed
+        },
+        "react-dom": {
+          singleton: true, // only a single version of the shared module is allowed
+        },
+      },
     }),
     new HtmlWebpackPlugin({
       template: './public/index.html',
